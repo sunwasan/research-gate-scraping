@@ -8,12 +8,15 @@ import json
 import re
 import os
 
+file_dir = os.path.dirname(os.path.abspath(__file__))
 
-destination_dir = 'data'
-log_dir = 'logs'
+destination_dir = os.path.join(file_dir, 'data')
+log_dir = os.path.join(file_dir, 'logs')
 os.makedirs(destination_dir, exist_ok=True)
 os.makedirs(log_dir, exist_ok=True)
-    
+   
+   
+ 
 def get_research_urls(
     query:str,
     max_results:int=100
@@ -35,10 +38,12 @@ def get_research_urls(
         start = page * 10  # Google search pagination (start=0, start=10, start=20, etc.)
         query_url = f"{query}&start={start}"
         
-        # Send the GET request to the query URL
-        r = requests.get(query_url)
-        r_src = r.content
-        soup = BeautifulSoup(r_src, 'html.parser')
+        # Send the GET request to the query URL using selenium
+        # r = requests.get(query_url)
+        # r_src = r.content
+        # soup = BeautifulSoup(r_src, 'html.parser')
+        
+        soup = get_page_source(query_url)
         
         # Find all the links that might contain the researchgate URLs
         all_a = soup.find_all('a', href=True)
@@ -49,7 +54,7 @@ def get_research_urls(
         all_research_urls.extend(research_urls)
         logging.info(f"[get_research_urls] Found {len(research_urls)} ResearchGate URLs on page {page + 1}")
         # Stop if we've gathered enough URLs (up to max_results)
-        if len(all_research_urls) >= max_results:
+        if len(all_research_urls) >= max_results or len(research_urls) == 0:
             logging.info(f"[get_research_urls] Found {len(all_research_urls)} ResearchGate URLs in total")
             break
 
@@ -102,8 +107,9 @@ def get_n_save_abstract(url:str, kw:str, max_results:int) -> None:
     Get the abstract from the ResearchGate page and save it to a JSON file
     """
     
-
-    destination_path = os.path.join(destination_dir, f'{kw}_{max_results}_abstracts.json')
+    # now = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+    today = datetime.now().strftime("%Y-%m-%d")
+    destination_path = os.path.join(destination_dir, f'{today}_{kw}_{max_results}_abstracts.json')
     
     try:
         soup = get_page_source(url)
@@ -123,6 +129,6 @@ def main(query:str, max_results:int):
 if __name__ == "__main__":
     query = "banana waste"
     now = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-    logging.basicConfig(filename=f"logs/{query.replace(" ","_")}_{now}.log", level=logging.INFO)
-    max_results = 100
+    logging.basicConfig(filename=os.path.join(log_dir, f"{query.replace(" ","_")}_{now}.log"), level=logging.INFO)
+    max_results = 1000
     main(query, max_results)
