@@ -38,11 +38,7 @@ def get_research_urls(
         start = page * 10  # Google search pagination (start=0, start=10, start=20, etc.)
         query_url = f"{query}&start={start}"
         
-        # Send the GET request to the query URL using selenium
-        # r = requests.get(query_url)
-        # r_src = r.content
-        # soup = BeautifulSoup(r_src, 'html.parser')
-        
+
         soup = get_page_source(query_url)
         
         # Find all the links that might contain the researchgate URLs
